@@ -18,12 +18,12 @@ jobs:
 
       - name: Create network if not exists
         run: |
-          docker network create microservices-network || true
+          docker network create microservices || true
 
       - name: Deploy infrastructure
         run: |
-          docker-compose -f docker-compose.infrastructure.yml down || true
-          docker-compose -f docker-compose.infrastructure.yml up -d
+          docker compose -f docker-compose.infrastructure.yml down || true
+          docker compose -f docker-compose.infrastructure.yml up -d
 
       - name: Wait for Kafka to be ready
         run: |
