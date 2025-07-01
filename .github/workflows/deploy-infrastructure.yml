@@ -1,0 +1,39 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy-infrastructure:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create network if not exists
+        run: |
+          docker network create microservices-network || true
+
+      - name: Deploy infrastructure
+        run: |
+          docker-compose -f docker-compose.infrastructure.yml down || true
+          docker-compose -f docker-compose.infrastructure.yml up -d
+
+      - name: Wait for Kafka to be ready
+        run: |
+          echo "Waiting for Kafka to be ready..."
+          timeout 300 bash -c 'until docker exec kafka kafka-topics --bootstrap-server localhost:9092 --list; do sleep 5; done'
+
+      - name: Create topics
+        run: |
+          docker exec kafka kafka-topics --create --bootstrap-server localhost:9092 --topic user-events --partitions 3 --replication-factor 1 || true
+          docker exec kafka kafka-topics --create --bootstrap-server localhost:9092 --topic auth-events --partitions 3 --replication-factor 1 || true
+          docker exec kafka kafka-topics --create --bootstrap-server localhost:9092 --topic notification-events --partitions 3 --replication-factor 1 || true
+          docker exec kafka kafka-topics --create --bootstrap-server localhost:9092 --topic order-events --partitions 3 --replication-factor 1 || true
+          docker exec kafka kafka-topics --create --bootstrap-server localhost:9092 --topic payment-events --partitions 3 --replication-factor 1 || true
