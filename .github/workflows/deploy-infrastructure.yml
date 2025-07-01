@@ -22,8 +22,8 @@ jobs:
 
       - name: Deploy infrastructure
         run: |
-          docker compose -f docker-compose.infrastructure.yml down || true
-          docker compose -f docker-compose.infrastructure.yml up -d
+          docker compose -f compose.yml down || true
+          docker compose -f compose.yml up -d
 
       - name: Wait for Kafka to be ready
         run: |
